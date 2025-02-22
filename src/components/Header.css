@@ -1,0 +1,41 @@
+.header {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 250px;
+  height: 60px;
+  background-color: #6474bd;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  z-index: 100;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+}
+
+.user-avatar {
+  font-size: 2rem;
+}
+
+.username {
+  font-size: 1rem;
+}
+
+.logout {
+  color: white;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .header {
+    left: 60px;
+    padding: 0 1rem;
+  }
+}
