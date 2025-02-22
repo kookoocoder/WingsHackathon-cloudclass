@@ -1,5 +1,7 @@
+// src/contexts/FileSystemContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './AuthContext'; // Import useAuth
 
 const FileSystemContext = createContext(null);
 
@@ -13,17 +15,35 @@ const initialFileSystem = {
 };
 
 export const FileSystemProvider = ({ children }) => {
+  const { user } = useAuth(); // Get the current user
     const [fileSystem, setFileSystem] = useState(() => {
-        const storedFileSystem = localStorage.getItem('fileSystem');
+      if(user){
+        const storedFileSystem = localStorage.getItem(`fileSystem_${user.username}`);
         return storedFileSystem ? JSON.parse(storedFileSystem) : initialFileSystem;
+      }
+        return initialFileSystem;
     });
-    const [currentDirectory, setCurrentDirectory] = useState("root");
 
-    useEffect(() => {
-        localStorage.setItem('fileSystem', JSON.stringify(fileSystem));
-    }, [fileSystem]);
+  const [currentDirectory, setCurrentDirectory] = useState("root");
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(`fileSystem_${user.username}`, JSON.stringify(fileSystem));
+    }
+  }, [fileSystem, user]); // Depend on user as well
+
+  // Check if a user is logged in before accessing the filesystem
+  const checkUser = () => {
+    if (!user) {
+        console.warn("No user logged in. File system operations cannot be performed.");
+        return false;
+    }
+    return true;
+    }
 
     const createFile = (name, content) => {
+      if (!checkUser()) return; // Prevent operations if no user
+
         const id = uuidv4();
         const newFile = { id, type: "file", name, content: content || "" };
         setFileSystem((prevFileSystem) => {
@@ -39,6 +59,8 @@ export const FileSystemProvider = ({ children }) => {
     };
 
     const createFolder = (name) => {
+        if (!checkUser()) return; // Prevent operations if no user
+
         const id = uuidv4();
         const newFolder = { id, type: "folder", name, children: [] };
 
@@ -55,6 +77,8 @@ export const FileSystemProvider = ({ children }) => {
     };
 
     const deleteItem = (id) => {
+      if (!checkUser()) return; // Prevent operations if no user
+
         setFileSystem((prevFileSystem) => {
             const newFileSystem = { ...prevFileSystem };
             delete newFileSystem[id];
@@ -70,6 +94,8 @@ export const FileSystemProvider = ({ children }) => {
     };
 
     const renameItem = (id, newName) => {
+      if (!checkUser()) return; // Prevent operations if no user
+
         setFileSystem((prevFileSystem) => ({
             ...prevFileSystem,
             [id]: { ...prevFileSystem[id], name: newName },
@@ -77,15 +103,16 @@ export const FileSystemProvider = ({ children }) => {
     };
 
     const updateFileContent = (id, content) => {
-        setFileSystem((prevFileSystem) => ({
-            ...prevFileSystem,
-            [id]: { ...prevFileSystem[id], content: content },
-        }));
+      if (!checkUser()) return; // Prevent operations if no user
+      setFileSystem((prevFileSystem) => ({
+        ...prevFileSystem,
+        [id]: { ...prevFileSystem[id], content },
+      }));
     };
     const navigateToDirectory = (id) => {
+        if (!checkUser()) return; // Prevent operations if no user
         setCurrentDirectory(id);
     };
-
     const value = {
         fileSystem,
         createFile,
@@ -94,7 +121,7 @@ export const FileSystemProvider = ({ children }) => {
         renameItem,
         updateFileContent,
         currentDirectory,
-        navigateToDirectory,
+      navigateToDirectory,
     };
 
     return (

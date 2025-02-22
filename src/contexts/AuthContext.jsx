@@ -18,6 +18,25 @@ export const AuthProvider = ({ children }) => {
     }, [user]);
 
     const login = (username, password) => {
+        // IMPORTANT: In a real application, NEVER store passwords directly.
+        // This is a simplified example.  You would normally send credentials
+        // to a server for authentication, and receive a token (e.g., JWT)
+        // which you would store in localStorage or a secure cookie.
+
+        // Check local storage for existing user.
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '{}');
+        if (storedUsers[username] && storedUsers[username].password === password) {
+            const loggedInUser = {
+                username: storedUsers[username].username,
+                email: storedUsers[username].email,
+                phone: storedUsers[username].phone,
+                dateOfBirth: storedUsers[username].dateOfBirth,
+            };
+              setUser(loggedInUser);
+            return true;
+        }
+
+
         if (username === 'student' && password === 'student') {
             const newUser = {
                 username: 'student',
@@ -32,22 +51,40 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signup = (username, email, phone, dateOfBirth, password) => {
+         // Check for existing user
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '{}');
+        if (storedUsers[username]) {
+            // User already exists
+            return false;
+        }
         const newUser = {
             username,
             email,
             phone,
             dateOfBirth,
+            password, // Again, NEVER store plain text passwords in a real app!
         };
-        setUser(newUser); // Consider better password handling in reality
+         // Store the new user in the 'users' object in localStorage
+        storedUsers[username] = newUser;
+        localStorage.setItem('users', JSON.stringify(storedUsers));
+
+        setUser(newUser); // Log the user in
         return true;
     };
-
     const logout = () => {
         setUser(null);
     };
 
     const updateUser = (updatedUser) => {
-        setUser(updatedUser);
+        // Update the user information in localStorage as well
+      const storedUsers = JSON.parse(localStorage.getItem('users') || '{}');
+      storedUsers[updatedUser.username] = {
+          ...storedUsers[updatedUser.username], //Keep the passowrd
+        ...updatedUser,
+      };
+
+      localStorage.setItem('users', JSON.stringify(storedUsers));
+      setUser(updatedUser);
     };
 
     return (
